@@ -72,3 +72,18 @@ st.divider()
 st.caption(
     "PhysicsX Lab · Understand physics by experiencing it."
 )
+
+st.divider()
+
+st.subheader("💬 Help Improve PhysicsX Lab")
+
+st.write(
+    "Enjoying PhysicsX Lab? Your feedback helps me find bugs, "
+    "improve the learning experience, and decide what to build next."
+)
+
+st.link_button(
+    "📝 Share Your Feedback",
+    "https://docs.google.com/forms/d/e/1FAIpQLSc-KjFXkmhxZ6gx1EOwXn8xCnaQi2iJrwieUWvio8KG8UFavA/viewform?usp=header",
+    use_container_width=True,
+)
