@@ -565,7 +565,7 @@ if test is None:
         3. Use **Discard Test & Exit** if you want to abandon an attempt.
            A discarded test will not save its score.
         4. Once submitted, a test cannot be resumed.
-        5. After submission, choose whether to save your score or not.
+        5. After submission, choose whether to save your score or not
         .
         """
     )
