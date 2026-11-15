@@ -1,68 +1,64 @@
+"""
+PhysicsX Lab - Comprehensive JEE Practice Suite
+Includes chapter-wise practice across 10 JEE domains,
+3-tier scaffolded hints, numerical tolerance checking,
+step-by-step LaTeX worked solutions, and session tracking.
+"""
 
 import json
 import math
-import random
-import uuid
 from pathlib import Path
-
 import streamlit as st
 
-# Active mock-test protection
-test = st.session_state.get("mock_test")
+from question_bank import CHAPTERS, DIFFICULTIES, get_practice_question
+from ui_theme import apply_custom_theme, render_header
 
+# Active mock-test anti-cheat safeguard
+test = st.session_state.get("mock_test")
 if test and not test.get("submitted", False):
     test["forced_submission"] = True
     st.switch_page("pages/3_📝_JEE_Test.py")
     st.stop()
-# ============================================================
-# PAGE CONFIGURATION
-# ============================================================
 
 st.set_page_config(
-    page_title="JEE Physics Practice",
+    page_title="PhysicsX Lab — JEE Practice Suite",
     page_icon="🎯",
     layout="wide",
 )
 
-st.title("🎯 JEE Physics Practice")
-st.caption(
-    "Practice projectile motion with numerical questions, MCQs, "
-    "hints, worked solutions, and saved sessions."
+apply_custom_theme()
+
+render_header(
+    title="JEE Physics Practice Suite",
+    subtitle="Master chapter-wise concepts through numerical and conceptual problems. Unlock 3-level progressive hints, examine detailed worked solutions, and track your accuracy.",
+    icon="🎯",
+    badge="Chapter-Wise Practice & Analytics",
 )
 
-
-# ============================================================
-# SAVE FILES
-# ============================================================
-
+# Persistent Session Directory
 DATA_DIR = Path(__file__).resolve().parent.parent / "practice_data"
 DATA_FILE = DATA_DIR / "saved_sessions.json"
 
 
 def load_sessions():
-    """Load saved practice sessions from disk."""
     try:
         if DATA_FILE.exists():
-            with DATA_FILE.open("r", encoding="utf-8") as file:
-                data = json.load(file)
+            with DATA_FILE.open("r", encoding="utf-8") as f:
+                data = json.load(f)
                 return data if isinstance(data, dict) else {}
     except (OSError, json.JSONDecodeError):
-        st.warning("Saved sessions could not be loaded.")
-
+        pass
     return {}
 
 
 def save_sessions(sessions):
-    """Save practice sessions to disk."""
     try:
         DATA_DIR.mkdir(parents=True, exist_ok=True)
-
-        with DATA_FILE.open("w", encoding="utf-8") as file:
-            json.dump(sessions, file, indent=2, ensure_ascii=False)
-
+        with DATA_FILE.open("w", encoding="utf-8") as f:
+            json.dump(sessions, f, indent=2, ensure_ascii=False)
         return True
     except OSError:
-        st.error("Could not save your sessions. Check folder permissions.")
+        st.error("Could not write practice session to disk. Check directory permissions.")
         return False
 
 
@@ -73,685 +69,301 @@ if "active_session_id" not in st.session_state:
     st.session_state.active_session_id = None
 
 
-# ============================================================
-# QUESTION BANK
-# ============================================================
-
-DIFFICULTIES = {
-    "Basic": {
-        "g": 10,
-        "description": "Direct formula-based questions",
-    },
-    "Intermediate": {
-        "g": 10,
-        "description": "More calculation and conceptual application",
-    },
-    "JEE Challenge": {
-        "g": 10,
-        "description": "Multi-step JEE-style problems",
-    },
-}
-
-
-def make_numerical_question(difficulty):
-    """Generate a projectile-motion numerical question."""
-    g = DIFFICULTIES[difficulty]["g"]
-
-    if difficulty == "Basic":
-        speed = random.choice([10, 20, 30, 40])
-        angle = random.choice([30, 45, 60])
-        kind = random.choice(["time", "height", "range"])
-
-    elif difficulty == "Intermediate":
-        speed = random.choice([20, 25, 30, 40, 50])
-        angle = random.choice([30, 37, 45, 53, 60])
-        kind = random.choice(["time", "height", "range"])
-
-    else:
-        speed = random.choice([20, 30, 40, 50, 60])
-        angle = random.choice([30, 37, 45, 53, 60])
-        kind = random.choice(["time", "height", "range", "horizontal"])
-
-    radians = math.radians(angle)
-    vx = speed * math.cos(radians)
-    vy = speed * math.sin(radians)
-
-    total_time = 2 * vy / g
-    max_height = vy**2 / (2 * g)
-    projectile_range = speed**2 * math.sin(2 * radians) / g
-
-    if kind == "time":
-        prompt = (
-            f"A projectile is launched at {speed} m/s at an angle of "
-            f"{angle}° to the horizontal. Find its total time of flight."
-        )
-        answer = total_time
-        unit = "s"
-        formula = "T = 2u sin(θ) / g"
-        working = (
-            f"T = 2 × {speed} × sin({angle}°) / {g}\n\n"
-            f"T = {total_time:.4f} s"
-        )
-
-    elif kind == "height":
-        prompt = (
-            f"A projectile is launched at {speed} m/s at an angle of "
-            f"{angle}° to the horizontal. Find its maximum height."
-        )
-        answer = max_height
-        unit = "m"
-        formula = "H = u² sin²(θ) / (2g)"
-        working = (
-            f"H = ({speed} × sin({angle}°))² / (2 × {g})\n\n"
-            f"H = {max_height:.4f} m"
-        )
-
-    elif kind == "range":
-        prompt = (
-            f"A projectile is launched at {speed} m/s at an angle of "
-            f"{angle}° to the horizontal on level ground. Find its range."
-        )
-        answer = projectile_range
-        unit = "m"
-        formula = "R = u² sin(2θ) / g"
-        working = (
-            f"R = {speed}² × sin(2 × {angle}°) / {g}\n\n"
-            f"R = {projectile_range:.4f} m"
-        )
-
-    else:
-        prompt = (
-            f"A projectile is launched at {speed} m/s at an angle of "
-            f"{angle}° to the horizontal. Find its horizontal velocity."
-        )
-        answer = vx
-        unit = "m/s"
-        formula = "uₓ = u cos(θ)"
-        working = (
-            f"uₓ = {speed} × cos({angle}°)\n\n"
-            f"uₓ = {vx:.4f} m/s"
-        )
-
-    hints = [
-        "Identify the given initial speed and launch angle.",
-        f"Use g = {g} m/s² and resolve the initial velocity into components.",
-        f"Relevant formula: {formula}.",
-    ]
-
-    return {
-        "id": str(uuid.uuid4()),
-        "type": "Numerical",
-        "difficulty": difficulty,
-        "prompt": prompt,
-        "answer": round(answer, 4),
-        "unit": unit,
-        "formula": formula,
-        "working": working,
-        "hints": hints,
-        "response": None,
-        "checked": False,
-        "correct": False,
-        "hint_level": 0,
-        "solution_shown": False,
-        "explanation": (
-            f"The correct answer is approximately {answer:.4f} {unit}."
-        ),
-    }
-
-
-def make_mcq_question(difficulty):
-    """Generate a multiple-choice conceptual question."""
-    questions = [
-        {
-            "prompt": (
-                "At the highest point of projectile motion, "
-                "which statement is correct?"
-            ),
-            "options": [
-                "Both velocity and acceleration are zero",
-                "Vertical velocity is zero, but acceleration is g downward",
-                "Horizontal velocity is zero",
-                "Acceleration is zero",
-            ],
-            "answer": "Vertical velocity is zero, but acceleration is g downward",
-            "explanation": (
-                "At the highest point, the vertical component of velocity "
-                "is zero momentarily. Gravity still acts downward, and the "
-                "horizontal velocity remains constant when air resistance "
-                "is neglected."
-            ),
-            "hints": [
-                "Consider the horizontal and vertical components separately.",
-                "Gravity does not stop acting at the highest point.",
-                "Only the vertical component of velocity becomes zero there.",
-            ],
-        },
-        {
-            "prompt": (
-                "For a projectile launched and landing at the same height, "
-                "the angle of projection for maximum range is:"
-            ),
-            "options": ["30°", "45°", "60°", "90°"],
-            "answer": "45°",
-            "explanation": (
-                "For fixed launch speed on level ground, R = u² sin(2θ)/g. "
-                "The range is maximum when sin(2θ) = 1, giving θ = 45°."
-            ),
-            "hints": [
-                "Write the formula for horizontal range.",
-                "The sine function has a maximum value of 1.",
-                "Set 2θ = 90°.",
-            ],
-        },
-        {
-            "prompt": (
-                "Ignoring air resistance, the horizontal acceleration "
-                "of a projectile is:"
-            ),
-            "options": ["g", "g/2", "Zero", "Dependent on launch angle"],
-            "answer": "Zero",
-            "explanation": (
-                "Gravity acts vertically downward. With air resistance "
-                "neglected, there is no horizontal force, so horizontal "
-                "acceleration is zero."
-            ),
-            "hints": [
-                "Think about the direction of gravitational acceleration.",
-                "There is no horizontal force in ideal projectile motion.",
-                "Horizontal velocity remains constant.",
-            ],
-        },
-        {
-            "prompt": (
-                "Two projectiles are launched with the same speed at "
-                "angles θ and (90° − θ). If they land at the same height, "
-                "their ranges are:"
-            ),
-            "options": [
-                "Always different",
-                "Equal",
-                "In a 2:1 ratio",
-                "Impossible to compare",
-            ],
-            "answer": "Equal",
-            "explanation": (
-                "Their ranges depend on sin(2θ). The complementary angle "
-                "gives sin(180° − 2θ) = sin(2θ), so the ranges are equal."
-            ),
-            "hints": [
-                "Use R = u² sin(2θ)/g.",
-                "Substitute the complementary angle.",
-                "Recall sin(180° − x) = sin(x).",
-            ],
-        },
-    ]
-
-    question = random.choice(questions).copy()
-    question.update({
-        "id": str(uuid.uuid4()),
-        "type": "MCQ",
-        "difficulty": difficulty,
-        "response": None,
-        "checked": False,
-        "correct": False,
-        "hint_level": 0,
-        "solution_shown": False,
-        "unit": "",
-        "formula": "",
-        "working": "",
-    })
-
-    return question
-
-
-def make_question(difficulty, question_type):
-    if question_type == "Numerical":
-        return make_numerical_question(difficulty)
-
-    if question_type == "MCQ":
-        return make_mcq_question(difficulty)
-
-    if random.choice(["Numerical", "MCQ"]) == "Numerical":
-        return make_numerical_question(difficulty)
-
-    return make_mcq_question(difficulty)
-
-
-# ============================================================
-# SESSION HELPERS
-# ============================================================
-
 def active_session():
-    session_id = st.session_state.active_session_id
-
-    if session_id is None:
-        return None
-
-    return st.session_state.practice_sessions.get(session_id)
+    s_id = st.session_state.active_session_id
+    return st.session_state.practice_sessions.get(s_id) if s_id else None
 
 
 def save_active_session():
-    """Persist the current session."""
     save_sessions(st.session_state.practice_sessions)
 
 
-def create_session(name, difficulty, question_type):
+def create_session(name, chapter, difficulty, question_type):
+    import uuid
+    import datetime
+
     session_id = str(uuid.uuid4())
+    first_q = get_practice_question(chapter=chapter, difficulty=difficulty, q_type=question_type)
 
     session = {
         "id": session_id,
-        "name": name.strip() or "My Practice Session",
+        "name": name.strip() or f"{chapter} Practice",
+        "chapter": chapter,
         "difficulty": difficulty,
         "question_type": question_type,
-        "questions": [],
-        "created_at": __import__("datetime").datetime.now().strftime(
-            "%d %b %Y, %I:%M %p"
-        ),
+        "questions": [first_q],
+        "created_at": datetime.datetime.now().strftime("%d %b %Y, %I:%M %p"),
     }
-
-    session["questions"].append(
-        make_question(difficulty, question_type)
-    )
-
     st.session_state.practice_sessions[session_id] = session
     st.session_state.active_session_id = session_id
     save_active_session()
 
 
 def add_question(session):
-    session["questions"].append(
-        make_question(
-            session["difficulty"],
-            session["question_type"],
-        )
+    new_q = get_practice_question(
+        chapter=session.get("chapter", "All Chapters (Mixed)"),
+        difficulty=session.get("difficulty", "Basic"),
+        q_type=session.get("question_type", "Mixed"),
     )
+    session["questions"].append(new_q)
     save_active_session()
 
 
 def get_stats(session):
-    questions = session["questions"]
-    attempted = [q for q in questions if q["checked"]]
-    correct = sum(1 for q in attempted if q["correct"])
-
+    q_list = session["questions"]
+    attempted = [q for q in q_list if q.get("checked")]
+    correct = sum(1 for q in attempted if q.get("correct"))
     return {
-        "total": len(questions),
+        "total": len(q_list),
         "attempted": len(attempted),
         "correct": correct,
-        "accuracy": (
-            100 * correct / len(attempted)
-            if attempted else 0
-        ),
+        "accuracy": (100 * correct / len(attempted)) if attempted else 0,
     }
 
 
 # ============================================================
-# SIDEBAR: SESSION MANAGEMENT
+# SIDEBAR: SESSIONS & CHAPTER SELECTOR
 # ============================================================
-
 with st.sidebar:
-    st.header("📚 Practice Sessions")
+    st.markdown("### 📚 Practice Sessions")
 
     session_names = {
-        session_id: (
-            f"{session['name']} "
-            f"({len(session.get('questions', []))} Q)"
-        )
-        for session_id, session
-        in st.session_state.practice_sessions.items()
+        s_id: f"{s['name']} ({len(s.get('questions', []))} Q)"
+        for s_id, s in st.session_state.practice_sessions.items()
     }
 
     if session_names:
         ids = list(session_names.keys())
+        curr_id = st.session_state.active_session_id
+        if curr_id not in ids:
+            curr_id = ids[0]
 
-        current_id = st.session_state.active_session_id
-        if current_id not in ids:
-            current_id = ids[0]
-
-        selected_id = st.selectbox(
-            "Open a saved session",
+        sel_id = st.selectbox(
+            "Select Practice Session",
             options=ids,
-            index=ids.index(current_id),
+            index=ids.index(curr_id),
             format_func=lambda x: session_names[x],
-            key="session_selector",
+            key="practice_session_selector",
         )
 
-        if selected_id != st.session_state.active_session_id:
-            st.session_state.active_session_id = selected_id
+        if sel_id != st.session_state.active_session_id:
+            st.session_state.active_session_id = sel_id
             st.rerun()
 
         st.divider()
 
-        if st.button("➕ Create New Session", use_container_width=True):
+        if st.button("➕ Create New Session", use_container_width=True, type="primary"):
             st.session_state.show_new_session_form = True
+            st.rerun()
 
         if st.button("🗑️ Delete Current Session", use_container_width=True):
-            if selected_id in st.session_state.practice_sessions:
-                del st.session_state.practice_sessions[selected_id]
-
-                remaining = list(st.session_state.practice_sessions.keys())
-                st.session_state.active_session_id = (
-                    remaining[0] if remaining else None
-                )
-
+            if sel_id in st.session_state.practice_sessions:
+                del st.session_state.practice_sessions[sel_id]
+                rem = list(st.session_state.practice_sessions.keys())
+                st.session_state.active_session_id = rem[0] if rem else None
                 save_sessions(st.session_state.practice_sessions)
                 st.rerun()
-
     else:
-        st.info("You don't have any saved sessions yet.")
-        if st.button("➕ Create Your First Session", use_container_width=True):
+        st.info("No saved sessions yet. Create one below to begin!")
+        if st.button("➕ Create Your First Session", use_container_width=True, type="primary"):
             st.session_state.show_new_session_form = True
 
     st.divider()
-    st.caption("Your sessions are saved locally on this computer.")
+    st.caption("Sessions are automatically saved locally and persist between runs.")
 
 
 # ============================================================
-# NEW SESSION FORM
+# NEW SESSION MODAL / FORM
 # ============================================================
-
 if "show_new_session_form" not in st.session_state:
-    st.session_state.show_new_session_form = (
-        not bool(st.session_state.practice_sessions)
-    )
+    st.session_state.show_new_session_form = not bool(st.session_state.practice_sessions)
 
 if st.session_state.show_new_session_form:
-    st.subheader("Create a Practice Session")
+    with st.container(border=True):
+        st.markdown("### 🛠️ Configure New Practice Session")
+        with st.form("new_session_creator_form"):
+            f_col1, f_col2 = st.columns(2)
+            with f_col1:
+                sess_name = st.text_input("Session Title", value="Mechanics Mastery", placeholder="e.g., Kinematics Deep Dive")
+                sess_chapter = st.selectbox("Physics Chapter", options=CHAPTERS, index=0)
+            with f_col2:
+                sess_diff = st.selectbox("Difficulty Level", options=list(DIFFICULTIES.keys()), index=1)
+                sess_type = st.selectbox("Question Format", options=["Mixed (MCQ + Numerical)", "Numerical Only", "MCQ Only"], index=0)
 
-    with st.form("new_session_form"):
-        session_name = st.text_input(
-            "Session name",
-            value="Projectile Motion Practice",
-            help="Give this practice session a name.",
-        )
+            st.caption(f"ℹ️ {DIFFICULTIES[sess_diff]}")
+            create_btn = st.form_submit_button("Start Practicing 🚀", use_container_width=True)
 
-        difficulty = st.selectbox(
-            "Difficulty",
-            options=list(DIFFICULTIES.keys()),
-            index=0,
-        )
-
-        question_type = st.selectbox(
-            "Question type",
-            options=["Mixed", "Numerical", "MCQ"],
-        )
-
-        st.caption(DIFFICULTIES[difficulty]["description"])
-
-        create_clicked = st.form_submit_button(
-            "Start Practising 🚀",
-            use_container_width=True,
-        )
-
-        if create_clicked:
-            create_session(
-                session_name,
-                difficulty,
-                question_type,
-            )
-            st.session_state.show_new_session_form = False
-            st.rerun()
+            if create_btn:
+                q_mapped = "Mixed" if "Mixed" in sess_type else ("Numerical" if "Numerical" in sess_type else "MCQ")
+                create_session(sess_name, sess_chapter, sess_diff, q_mapped)
+                st.session_state.show_new_session_form = False
+                st.rerun()
 
 
 # ============================================================
-# MAIN PRACTICE INTERFACE
+# ACTIVE SESSION INTERFACE
 # ============================================================
-
 session = active_session()
-
 if session is None:
-    st.info("Create a session to start practising.")
+    st.info("Please create or select a practice session from the sidebar.")
     st.stop()
 
 stats = get_stats(session)
 
-st.subheader(session["name"])
+# Header Stats Dashboard
+st.subheader(f"📖 {session['name']}")
+st.caption(f"Chapter: **{session.get('chapter', 'All Chapters')}** · Level: **{session.get('difficulty', 'Intermediate')}** · Format: **{session.get('question_type', 'Mixed')}**")
 
-col1, col2, col3, col4 = st.columns(4)
+stat_col1, stat_col2, stat_col3, stat_col4 = st.columns(4)
+stat_col1.metric("Total Questions", stats["total"])
+stat_col2.metric("Attempted", stats["attempted"])
+stat_col3.metric("Correct Answers", stats["correct"])
+stat_col4.metric("Accuracy", f"{stats['accuracy']:.1f}%")
 
-col1.metric("Questions", stats["total"])
-col2.metric("Attempted", stats["attempted"])
-col3.metric("Correct", stats["correct"])
-col4.metric("Accuracy", f"{stats['accuracy']:.1f}%")
-
-st.progress(
-    stats["attempted"] / stats["total"]
-    if stats["total"] else 0
-)
-
-st.caption(
-    f"Difficulty: {session['difficulty']} · "
-    f"Question type: {session['question_type']}"
-)
-
+st.progress(stats["attempted"] / stats["total"] if stats["total"] else 0)
 st.divider()
 
-
-# ============================================================
-# DISPLAY QUESTIONS
-# ============================================================
-
-for index, question in enumerate(session["questions"]):
+# Display questions in session
+for idx, q in enumerate(session["questions"]):
     with st.container(border=True):
         st.markdown(
-            f"### Question {index + 1} · {question['type']}"
+            f"""
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span style="font-weight: 700; font-size: 1.15rem; color: #f8fafc;">Question {idx + 1}</span>
+                <span class="px-badge px-badge-purple">{q.get('chapter', 'JEE Physics')}</span>
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
+        st.caption(f"Type: **{q['type']}** · Difficulty: **{q['difficulty']}**")
+        st.markdown(q["prompt"])
 
-        st.caption(question["difficulty"])
-        st.write(question["prompt"])
+        if q["type"] == "Numerical":
+            st.caption(f"Enter numerical answer in **{q['unit']}** (tolerates small decimal rounding differences).")
+            input_key = f"input_num_{session['id']}_{q['id']}"
+            saved_resp = q.get("response")
+            init_val = str(saved_resp) if saved_resp is not None else ""
 
-        if question["type"] == "Numerical":
-            st.caption(
-                f"Enter your answer in {question['unit']}. "
-                "You may use decimals."
-            )
-
-            # IMPORTANT:
-            # This is a text input, not a number_input.
-            # It starts blank, so it will not display 0.000.
-            input_key = f"num_{session['id']}_{question['id']}"
-
-            saved_response = question.get("response")
-            initial_value = (
-                str(saved_response)
-                if saved_response is not None
-                else ""
-            )
-
-            response_text = st.text_input(
-                "Your numerical answer",
-                value=initial_value,
-                placeholder="Type your answer here...",
+            user_num_str = st.text_input(
+                "Your Answer:",
+                value=init_val,
+                placeholder="Type numerical value...",
                 key=input_key,
-                disabled=question["checked"],
-            )
-
-            response = response_text.strip()
+                disabled=q.get("checked", False),
+            ).strip()
 
         else:
-            options = question["options"]
-            mcq_key = f"mcq_{session['id']}_{question['id']}"
+            options = q["options"]
+            mcq_key = f"input_mcq_{session['id']}_{q['id']}"
+            saved_resp = q.get("response")
+            default_idx = options.index(saved_resp) if saved_resp in options else None
 
-            saved_response = question.get("response")
-            default_index = (
-                options.index(saved_response)
-                if saved_response in options
-                else None
-            )
-
-            response = st.radio(
-                "Choose your answer",
+            user_choice = st.radio(
+                "Select one option:",
                 options=options,
-                index=default_index,
+                index=default_idx,
                 key=mcq_key,
-                disabled=question["checked"],
+                disabled=q.get("checked", False),
             )
 
-        button_col1, button_col2, button_col3 = st.columns(3)
+        btn1, btn2, btn3 = st.columns(3)
 
-        with button_col1:
-            if not question["checked"]:
-                check_clicked = st.button(
-                    "Check Answer",
-                    key=f"check_{session['id']}_{question['id']}",
-                    use_container_width=True,
-                )
+        with btn1:
+            if not q.get("checked"):
+                check_btn = st.button("Check Answer ⚡", key=f"chk_{session['id']}_{q['id']}", use_container_width=True, type="primary")
             else:
-                check_clicked = False
+                check_btn = False
 
-        with button_col2:
-            if not question["checked"]:
-                hint_clicked = st.button(
-                    "💡 Hint",
-                    key=f"hint_{session['id']}_{question['id']}",
-                    use_container_width=True,
-                )
+        with btn2:
+            if not q.get("checked"):
+                hint_btn = st.button("💡 Hint (3 Levels)", key=f"hnt_{session['id']}_{q['id']}", use_container_width=True)
             else:
-                hint_clicked = False
+                hint_btn = False
 
-        with button_col3:
-            solution_clicked = st.button(
-                "📖 Show Solution",
-                key=f"solution_{session['id']}_{question['id']}",
-                use_container_width=True,
-            )
+        with btn3:
+            sol_btn = st.button("📖 View Full Solution", key=f"sol_{session['id']}_{q['id']}", use_container_width=True)
 
-        if hint_clicked:
-            question["hint_level"] = min(
-                question["hint_level"] + 1,
-                len(question["hints"]),
-            )
+        # Hint logic
+        if hint_btn:
+            q["hint_level"] = min(q.get("hint_level", 0) + 1, len(q.get("hints", [])))
             save_active_session()
             st.rerun()
 
-        if question["hint_level"] > 0:
-            st.markdown("**Hints**")
-            for hint in question["hints"][:question["hint_level"]]:
-                st.info(hint)
+        if q.get("hint_level", 0) > 0:
+            st.markdown("##### 💡 Progressive Hints:")
+            for h_idx in range(q["hint_level"]):
+                st.info(f"**Hint {h_idx + 1}:** {q['hints'][h_idx]}")
 
-        if check_clicked:
-            if question["type"] == "Numerical":
-                if not response:
-                    st.warning("Enter an answer before checking.")
+        # Check logic
+        if check_btn:
+            if q["type"] == "Numerical":
+                if not user_num_str:
+                    st.warning("Please type a numerical answer first.")
                     continue
-
                 try:
-                    numeric_response = float(response)
+                    num_val = float(user_num_str)
                 except ValueError:
-                    st.warning("Please enter a valid number.")
+                    st.warning("Invalid numerical input. Please enter numbers and decimals only.")
                     continue
 
-                question["response"] = numeric_response
-
-                # Accept small rounding differences.
-                tolerance = max(
-                    0.05,
-                    abs(question["answer"]) * 0.02,
-                )
-
-                question["correct"] = (
-                    math.isfinite(numeric_response)
-                    and abs(numeric_response - question["answer"])
-                    <= tolerance
-                )
+                q["response"] = num_val
+                # Check tolerance
+                tol = q.get("tolerance", 0.08)
+                is_correct = math.isfinite(num_val) and abs(num_val - q["answer"]) <= max(tol, abs(q["answer"]) * 0.02)
+                q["correct"] = is_correct
 
             else:
-                if response is None:
-                    st.warning("Choose an option before checking.")
+                if user_choice is None:
+                    st.warning("Please select an option before checking.")
                     continue
+                q["response"] = user_choice
+                q["correct"] = user_choice == q["answer"]
 
-                question["response"] = response
-                question["correct"] = response == question["answer"]
-
-            question["checked"] = True
+            q["checked"] = True
             save_active_session()
             st.rerun()
 
-        if question["checked"]:
-            if question["correct"]:
-                st.success("Correct! Well done. 🎉")
+        # Display result banner
+        if q.get("checked"):
+            if q.get("correct"):
+                st.success("🎉 Correct Answer! Outstanding work.")
             else:
-                st.error("Not quite. Review the solution below.")
+                st.error("❌ Incorrect answer. Check the step-by-step solution below.")
 
-            if question["type"] == "Numerical":
-                st.write(
-                    f"**Your answer:** {question['response']} "
-                    f"{question['unit']}"
-                )
-                st.write(
-                    f"**Correct answer:** {question['answer']:.4f} "
-                    f"{question['unit']}"
-                )
+            if q["type"] == "Numerical":
+                st.write(f"**Your Answer:** `{q['response']} {q['unit']}`  |  **Target Answer:** `{q['answer']} {q['unit']}`")
             else:
-                st.write(f"**Your answer:** {question['response']}")
-                st.write(f"**Correct answer:** {question['answer']}")
+                st.write(f"**Your Answer:** {q['response']}")
+                st.write(f"**Correct Answer:** {q['answer']}")
 
-        if solution_clicked:
-            question["solution_shown"] = True
+        # Solution view
+        if sol_btn:
+            q["solution_shown"] = True
             save_active_session()
 
-        if question["solution_shown"] or question["checked"]:
-            st.markdown("#### Worked Solution")
+        if q.get("solution_shown") or q.get("checked"):
+            with st.expander("📝 Step-by-Step Worked Solution", expanded=True):
+                if q["type"] == "Numerical":
+                    if q.get("formula"):
+                        st.markdown(f"**Governing Formula:**")
+                        st.latex(q["formula"])
+                    st.markdown("**Detailed Working:**")
+                    st.markdown(q["working"])
+                else:
+                    st.markdown(f"**Correct Choice:** `{q['answer']}`")
+                    st.markdown(f"**Conceptual Explanation:** {q['explanation']}")
 
-            if question["type"] == "Numerical":
-                st.markdown(f"**Formula:** `{question['formula']}`")
-                st.code(question["working"], language="text")
-            else:
-                st.write(question["explanation"])
-
-
-# ============================================================
-# SESSION ACTIONS
-# ============================================================
-
+# Session Actions
 st.divider()
-st.subheader("Keep Practising")
+st.subheader("Keep Practicing")
+a_col1, a_col2 = st.columns(2)
 
-action_col1, action_col2 = st.columns(2)
-
-with action_col1:
-    if st.button("➕ Generate Next Question", use_container_width=True):
+with a_col1:
+    if st.button("➕ Generate Next Question in this Chapter", use_container_width=True, type="primary"):
         add_question(session)
         st.rerun()
 
-with action_col2:
-    if st.button("🔄 Start a New Session", use_container_width=True):
+with a_col2:
+    if st.button("🔄 Configure Another Session", use_container_width=True):
         st.session_state.show_new_session_form = True
         st.rerun()
-
-
-# ============================================================
-# SESSION SUMMARY
-# ============================================================
-
-stats = get_stats(session)
-
-st.divider()
-st.subheader("📊 Session Summary")
-
-summary_col1, summary_col2, summary_col3 = st.columns(3)
-
-summary_col1.metric("Total Questions", stats["total"])
-summary_col2.metric("Questions Attempted", stats["attempted"])
-summary_col3.metric("Correct Answers", stats["correct"])
-
-if stats["attempted"]:
-    st.write(f"**Current accuracy:** {stats['accuracy']:.1f}%")
-
-    if stats["attempted"] == stats["total"]:
-        if stats["accuracy"] >= 80:
-            st.success("Excellent work! You're building a strong foundation.")
-        elif stats["accuracy"] >= 50:
-            st.info("Good effort. Review the mistakes and practise another set.")
-        else:
-            st.info(
-                "Focus on understanding the formulas and worked solutions "
-                "before attempting another set."
-            )
-else:
-    st.write("Attempt your first question to start tracking your progress.")
-
-st.caption(
-    "Numerical answers allow a small rounding tolerance. "
-    "Projectile-motion calculations assume no air resistance and use "
-    "g = 10 m/s²."
-)
