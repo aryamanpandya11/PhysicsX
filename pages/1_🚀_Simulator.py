@@ -90,9 +90,9 @@ with tab_kinematics:
         m3.metric("Horizontal Range", f"{r_range:.2f} m")
 
         m4, m5, m6 = st.columns(3)
-        m4.metric("Apex Velocity uₓ (m/s)", f"{vx:.2f} m/s")
-        m5.metric("Impact Velocity (m/s)", f"{v_impact:.2f} m/s")
-        m6.metric("Time to Peak (s)", f"{t_apex:.2f} s")
+        m4.metric("Apex Velocity (uₓ)", f"{vx:.2f} m/s")
+        m5.metric("Impact Velocity", f"{v_impact:.2f} m/s")
+        m6.metric("Time to Peak", f"{t_apex:.2f} s")
 
         if launch_mode == "Single Trajectory":
             t_eval = np.linspace(0, t_flight, 250)
@@ -222,13 +222,13 @@ with tab_kinematics:
             with col_res_a:
                 st.markdown(f"**Angle A ({comp_a}°)**")
                 ra1, ra2 = st.columns(2)
-                ra1.metric("Apex Velocity uₓ (m/s)", f"{vx_comp_a:.2f} m/s")
-                ra2.metric("Impact Velocity (m/s)", f"{v_impact_comp_a:.2f} m/s")
+                ra1.metric("Apex Velocity", f"{vx_comp_a:.2f} m/s")
+                ra2.metric("Impact Velocity", f"{v_impact_comp_a:.2f} m/s")
             with col_res_b:
                 st.markdown(f"**Angle B ({comp_b}°)**")
                 rb1, rb2 = st.columns(2)
-                rb1.metric("Apex Velocity uₓ (m/s)", f"{vx_comp_b:.2f} m/s")
-                rb2.metric("Impact Velocity (m/s)", f"{v_impact_comp_b:.2f} m/s")
+                rb1.metric("Apex Velocity", f"{vx_comp_b:.2f} m/s")
+                rb2.metric("Impact Velocity", f"{v_impact_comp_b:.2f} m/s")
 
             if math.isclose(comp_a + comp_b, 90, abs_tol=1e-5):
                 st.success("🎯 Complementary Angle Theorem: Since $\\theta_A + \\theta_B = 90^\\circ$, both projectiles have identical horizontal ranges at equal launch speeds!")

@@ -134,11 +134,11 @@ h_max = (vy0**2) / (2 * g_val)
 r_range = vx0 * t_flight
 
 m1, m2, m3, m4, m5 = st.columns(5)
-m1.metric("Flight Time (s)", f"{t_flight:.2f} s")
-m2.metric("Max Height (m)", f"{h_max:.2f} m")
-m3.metric("Range (m)", f"{r_range:.2f} m")
-m4.metric("Apex Velocity (m/s)", f"{vx0:.2f} m/s")
-m5.metric("Impact Velocity (m/s)", f"{quick_speed:.2f} m/s")
+m1.metric("Flight Time", f"{t_flight:.2f} s")
+m2.metric("Max Height", f"{h_max:.2f} m")
+m3.metric("Range", f"{r_range:.2f} m")
+m4.metric("Apex Velocity", f"{vx0:.2f} m/s")
+m5.metric("Impact Velocity", f"{quick_speed:.2f} m/s")
 
 # Plotly interactive trajectory curve
 t_pts = np.linspace(0, t_flight, 120)
