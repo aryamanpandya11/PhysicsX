@@ -211,6 +211,19 @@ with st.expander("📚 High-Yield JEE Physics Formula Vault & Revision Cards"):
         st.latex(r"\beta_{\text{YDSE}} = \frac{\lambda D}{d},\quad \Delta y = \frac{(\mu - 1)t D}{d}")
         st.latex(r"K_{\max} = h\nu - \Phi_0 = e V_0,\quad \eta_{\text{Carnot}} = 1 - \frac{T_C}{T_H}")
 
+st.divider()
+
+st.subheader("💬 Help Improve PhysicsX Lab")
+st.write(
+    "Enjoying PhysicsX Lab? Your feedback helps find bugs, "
+    "improve the learning experience, and decide what simulations and chapters to build next."
+)
+st.link_button(
+    "📝 Share Your Feedback (Google Form)",
+    "https://docs.google.com/forms/d/e/1FAIpQLSc-KjFXkmhxZ6gx1EOwXn8xCnaQi2iJrwieUWvio8KG8UFavA/viewform?usp=header",
+    use_container_width=True,
+)
+
 st.markdown(
     """
     <div style="text-align: center; color: #64748b; font-size: 0.85rem; margin-top: 40px; padding: 20px 0;">
