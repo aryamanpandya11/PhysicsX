@@ -133,16 +133,18 @@ t_flight = 2 * vy0 / g_val
 h_max = (vy0**2) / (2 * g_val)
 r_range = vx0 * t_flight
 
-m1, m2, m3, m4 = st.columns(4)
-m1.metric("Time of Flight", f"{t_flight:.2f} s")
-m2.metric("Maximum Height", f"{h_max:.2f} m")
-m3.metric("Horizontal Range", f"{r_range:.2f} m")
-m4.metric("Apex Speed", f"{vx0:.2f} m/s")
+m1, m2, m3, m4, m5 = st.columns(5)
+m1.metric("Flight Time (s)", f"{t_flight:.2f} s")
+m2.metric("Max Height (m)", f"{h_max:.2f} m")
+m3.metric("Range (m)", f"{r_range:.2f} m")
+m4.metric("Apex Velocity (m/s)", f"{vx0:.2f} m/s")
+m5.metric("Impact Velocity (m/s)", f"{quick_speed:.2f} m/s")
 
 # Plotly interactive trajectory curve
 t_pts = np.linspace(0, t_flight, 120)
 x_pts = vx0 * t_pts
 y_pts = vy0 * t_pts - 0.5 * g_val * (t_pts**2)
+v_pts = np.sqrt(vx0**2 + (vy0 - g_val * t_pts)**2)
 
 fig = go.Figure()
 
@@ -153,7 +155,8 @@ fig.add_trace(go.Scatter(
     mode="lines",
     line=dict(color="#00f0ff", width=3.5),
     name="Trajectory Path",
-    hovertemplate="Distance: %{x:.2f} m<br>Height: %{y:.2f} m<extra></extra>",
+    customdata=v_pts,
+    hovertemplate="Distance: %{x:.2f} m<br>Height: %{y:.2f} m<br>Speed: %{customdata:.2f} m/s<extra></extra>",
 ))
 
 # Key markers: Apex and Landing
@@ -162,7 +165,7 @@ fig.add_trace(go.Scatter(
     y=[h_max],
     mode="markers+text",
     marker=dict(color="#d946ef", size=11, symbol="diamond"),
-    text=[f"Apex ({h_max:.1f} m)"],
+    text=[f"Apex: {h_max:.1f} m (v = {vx0:.2f} m/s)"],
     textposition="top center",
     textfont=dict(color="#d946ef", size=12),
     name="Highest Point",
@@ -174,7 +177,7 @@ fig.add_trace(go.Scatter(
     y=[0],
     mode="markers+text",
     marker=dict(color="#10b981", size=11, symbol="circle"),
-    text=[f"Landing ({r_range:.1f} m)"],
+    text=[f"Landing: {r_range:.1f} m (v_impact = {quick_speed:.2f} m/s)"],
     textposition="bottom center",
     textfont=dict(color="#10b981", size=12),
     name="Landing Target",

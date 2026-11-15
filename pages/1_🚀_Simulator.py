@@ -90,14 +90,15 @@ with tab_kinematics:
         m3.metric("Horizontal Range", f"{r_range:.2f} m")
 
         m4, m5, m6 = st.columns(3)
-        m4.metric("Apex Velocity (uₓ)", f"{vx:.2f} m/s")
-        m5.metric("Impact Velocity", f"{v_impact:.2f} m/s")
-        m6.metric("Time to Peak", f"{t_apex:.2f} s")
+        m4.metric("Apex Velocity uₓ (m/s)", f"{vx:.2f} m/s")
+        m5.metric("Impact Velocity (m/s)", f"{v_impact:.2f} m/s")
+        m6.metric("Time to Peak (s)", f"{t_apex:.2f} s")
 
         if launch_mode == "Single Trajectory":
             t_eval = np.linspace(0, t_flight, 250)
             x_eval = vx * t_eval
             y_eval = initial_h + vy * t_eval - 0.5 * g * (t_eval**2)
+            v_inst = np.sqrt(vx**2 + (vy - g * t_eval)**2)
 
             fig_traj = go.Figure()
 
@@ -112,7 +113,8 @@ with tab_kinematics:
                 x=x_eval, y=y_eval, mode="lines",
                 line=dict(color="#00f0ff", width=3.5),
                 name=f"Path (u={speed} m/s, θ={angle}°)",
-                hovertemplate="x: %{x:.2f} m<br>y: %{y:.2f} m<extra></extra>",
+                customdata=v_inst,
+                hovertemplate="Distance x: %{x:.2f} m<br>Height y: %{y:.2f} m<br>Instantaneous Speed: %{customdata:.2f} m/s<extra></extra>",
             ))
 
             # Apex and Landing markers
@@ -120,17 +122,17 @@ with tab_kinematics:
             fig_traj.add_trace(go.Scatter(
                 x=[x_apex], y=[h_max], mode="markers+text",
                 marker=dict(color="#f43f5e", size=10, symbol="diamond"),
-                text=[f"Apex ({h_max:.1f}m)"], textposition="top center",
+                text=[f"Apex: {h_max:.1f} m (v = {vx:.2f} m/s)"], textposition="top center",
                 textfont=dict(color="#f43f5e", size=12),
-                name="Apex", hoverinfo="skip",
+                name="Apex (Highest Point)", hoverinfo="skip",
             ))
 
             fig_traj.add_trace(go.Scatter(
                 x=[r_range], y=[0], mode="markers+text",
                 marker=dict(color="#10b981", size=10, symbol="circle"),
-                text=[f"Landing ({r_range:.1f}m)"], textposition="bottom center",
+                text=[f"Landing: {r_range:.1f} m (v_impact = {v_impact:.2f} m/s)"], textposition="bottom center",
                 textfont=dict(color="#10b981", size=12),
-                name="Landing", hoverinfo="skip",
+                name="Landing Point", hoverinfo="skip",
             ))
 
             fig_traj.update_layout(
@@ -210,6 +212,23 @@ with tab_kinematics:
                 )
             )
             st.plotly_chart(fig_comp, use_container_width=True)
+
+            vx_comp_a = speed * math.cos(rad_a)
+            vx_comp_b = speed * math.cos(rad_b)
+            v_impact_comp_a = speed
+            v_impact_comp_b = speed
+
+            col_res_a, col_res_b = st.columns(2)
+            with col_res_a:
+                st.markdown(f"**Angle A ({comp_a}°)**")
+                ra1, ra2 = st.columns(2)
+                ra1.metric("Apex Velocity uₓ (m/s)", f"{vx_comp_a:.2f} m/s")
+                ra2.metric("Impact Velocity (m/s)", f"{v_impact_comp_a:.2f} m/s")
+            with col_res_b:
+                st.markdown(f"**Angle B ({comp_b}°)**")
+                rb1, rb2 = st.columns(2)
+                rb1.metric("Apex Velocity uₓ (m/s)", f"{vx_comp_b:.2f} m/s")
+                rb2.metric("Impact Velocity (m/s)", f"{v_impact_comp_b:.2f} m/s")
 
             if math.isclose(comp_a + comp_b, 90, abs_tol=1e-5):
                 st.success("🎯 Complementary Angle Theorem: Since $\\theta_A + \\theta_B = 90^\\circ$, both projectiles have identical horizontal ranges at equal launch speeds!")
